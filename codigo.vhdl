@@ -9,34 +9,34 @@ entity fp_adder is
         frac1, frac2 : in std_logic_vector(7 downto 0);
         sign_out     : out std_logic;
         exp_out      : out std_logic_vector(3 downto 0);
-        frac_out     : out std_logic_vector(7 downto   
- 0)
+        frac_out     : out std_logic_vector(7 downto 0)
     );
-end entity;
+end fp_adder;
 
 architecture arch of fp_adder is
-    -- Sufixos para facilitar a leitura
-    subtype b, s, a, n is for aligned, normalized number;
+    -- Sufixos b, s, a, n
+    -- para big, small, aligned, normalized
 
-    signal signb, signs, expb, exps, expn : unsigned(3 downto 0);
+    signal signb, signs: std_logic;
+    signal expb, exps, expn : unsigned(3 downto 0);
     signal fracb, fracs, fraca, fracn : unsigned(7 downto 0);
-    signal sum_norm               : unsigned(7 downto 0);
-    signal exp_diff               : unsigned(3 downto 0);
-    signal sum                   : unsigned(8 downto 0); -- One extra for carry
-    signal lead0                 : unsigned(2 downto 0);
+    signal sum_norm: unsigned(7 downto 0);
+    signal exp_diff: unsigned(3 downto 0);
+    signal sum: unsigned(8 downto 0); -- One extra for carry
+    signal lead0: unsigned(2 downto 0);
 
 begin
     -- 1st stage: sort to find the larger number
-    process (sign1, sign2,   
- expl, exp2, fracl, frac2)
+    process (sign1, sign2, expl, exp2, fracl, frac2)
     begin
         if (expl & fracl) > (exp2 & frac2) then
             signb <= sign1;
             signs <= sign2;
             expb  <= unsigned(expl);
             exps  <= unsigned(exp2);
-            else
+            fracb <= unsigned(frac1);
             fracs <= unsigned(frac2);
+        else
             signb <= sign2;
             signs <= sign1;
             expb <= unsigned(exp2);
@@ -44,7 +44,7 @@ begin
             fracb <= unsigned(frac2);
             fracs <= unsigned(frac1);
         end if;
-        end process;
+    end process;
 
         -- 2nd stage: align smaller number
         exp_diff <= expb - exps;
@@ -74,7 +74,7 @@ begin
                 "111";
 
         -- shift significand according to leading 0
-        with leado select
+        with lead0 select
             sum_norm <= 
                 sum(7 downto 0)  when "000",
                 sum(6 downto 0) & '0' when "001",
@@ -96,7 +96,7 @@ begin
                 expn <= (others => '0');
                 fracn <= (others => '0');
             else
-                expn <= expb - leado;
+                expn <= expb - lead0;
                 fracn <= sum_norm;
             end if;
         end process;
